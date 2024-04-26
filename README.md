@@ -1,4 +1,17 @@
 # CrossHAR
+# Abstract
+The increasing availability of low-cost wearable devices and smartphones has significantly advanced the field of sensor-based
+human activity recognition (HAR), attracting considerable research interest. One of the major challenges in HAR is the
+domain shift problem in cross-dataset activity recognition, which occurs due to variations in users, device types, and sensor
+placements between the source dataset and the target dataset. Although domain adaptation methods have shown promise,
+they typically require access to the target dataset during the training process, which might not be practical in some scenarios.
+To address these issues, we introduce CrossHAR, a new HAR model designed to improve model performance on unseen target
+datasets. CrossHAR involves three main steps: (i) CrossHAR explores the sensor data generation principle to diversify the data
+distribution and augment the raw sensor data. (ii) CrossHAR then employs a hierarchical self-supervised pretraining approach
+with the augmented data to develop a generalizable representation. (iii) Finally, CrossHAR fine-tunes the pretrained model with
+a small set of labeled data in the source dataset, enhancing its performance in cross-dataset HAR. Our extensive experiments
+across multiple real-world HAR datasets demonstrate that CrossHAR outperforms current state-of-the-art methods by 10.83%
+in accuracy, demonstrating its effectiveness in generalizing to unseen target datasets.
 ## Requirement
 The required packages are listed in requirements.txt for minimum requirement (Python 3.8.19):
 ```shell

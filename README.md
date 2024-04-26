@@ -1,5 +1,4 @@
 # CrossHAR
-# CrossHAR
 ## Requirement
 The required packages are listed in requirements.txt for minimum requirement (Python 3.8.19):
 ```shell

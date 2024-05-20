@@ -1,6 +1,9 @@
 # CrossHAR
 This is the implementation of the IMWUT 2024 paper "CrossHAR: Generalizing Cross-dataset Human Activity Recognition via Hierarchical Self-Supervised Pretraining". While CrossHAR is evaluated with IMU sensor data for human activity recognition, it also has the potential to be applied to other applications where sequence-based sensing data is involved, e.g., EMG, EEG, and ECG. 
 
+![image](https://github.com/kingdomrush2/CrossHAR/assets/58900218/d2c53a72-ca86-4044-b902-d4e887642691)
+
+
 # Abstract
 The increasing availability of low-cost wearable devices and smartphones has significantly advanced the field of sensor-based
 human activity recognition (HAR), attracting considerable research interest. One of the major challenges in HAR is the

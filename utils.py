@@ -343,7 +343,7 @@ class IMUDataset(Dataset):
         return len(self.data)
 
 
-class LIBERTDataset4Pretrain(Dataset): 
+class Dataset4Pretrain(Dataset): 
     """ Load sentence pair (sequential or random order) from corpus """
     def __init__(self, data, pipeline=[]):  
         self.pipeline = pipeline

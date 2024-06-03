@@ -5,10 +5,10 @@ import models, train
 
 from torch.utils.data import Dataset, TensorDataset, DataLoader
 from torchinfo import summary
-from models import LIMUBertModel4Pretrain
+from models import MaskedModel4Pretrain
 from utils import get_device, LIBERTDataset4Pretrain, handle_argv, load_pretrain_data_config, \
     prepare_pretrain_dataset, Preprocess4Normalization,  Preprocess4Mask, augument_dataset
-from TC import TC
+from Contrastive import Contrastive
 
 
 def main(args, training_rate):
@@ -30,17 +30,17 @@ def main(args, training_rate):
     data_loader_test = DataLoader(data_set_test, shuffle=False, batch_size=train_cfg.batch_size, drop_last=True)
 
     device = get_device(args.gpu)
-    LIMUBert_model = LIMUBertModel4Pretrain(model_cfg).to(device)
-    summary(LIMUBert_model, (1, data.shape[1], data.shape[2]))
-    TC_model = TC().to(device)
-    summary(TC_model, (1, data.shape[1], 72))
+    Masked_model = MaskedModel4Pretrain(model_cfg).to(device)
+    summary(Masked_model, (1, data.shape[1], data.shape[2]))
+    Contrastive_model = Contrastive().to(device)
+    summary(Contrastive_model, (1, data.shape[1], 72))
 
     criterion = nn.MSELoss(reduction='none')
 
-    LIMUBert_optimizer = torch.optim.Adam(params=LIMUBert_model.parameters(), lr=train_cfg.lr)
-    TC_optimizer = torch.optim.Adam(params=TC_model.parameters(), lr=train_cfg.lr)
+    Masked_optimizer = torch.optim.Adam(params=Masked_model.parameters(), lr=train_cfg.lr)
+    Contrastive_optimizer = torch.optim.Adam(params=Contrastive_model.parameters(), lr=train_cfg.lr)
     print('pretrain model save path:'+args.save_path_pretrain)
-    trainer = train.Trainer(train_cfg, LIMUBert_model, LIMUBert_optimizer, TC_model, TC_optimizer, args.save_path_pretrain,
+    trainer = train.Trainer(train_cfg, Masked_model, Masked_optimizer, Contrastive_model, Contrastive_optimizer, args.save_path_pretrain,
                             device, batch_size=train_cfg.batch_size, criterion=criterion)
 
     print('dataloader_train',len(data_loader_train))

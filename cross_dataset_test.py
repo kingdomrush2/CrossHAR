@@ -5,10 +5,10 @@ import train
 from torch import nn
 from torch.utils.data import DataLoader
 from config import load_dataset_label_names
-from models import LIMUBertModel4Pretrain, fetch_classifier
-from utils import LIBERTDataset4Pretrain, load_pretrain_data_config, get_device, handle_argv, \
-    Preprocess4Normalization, IMUDataset, prepare_classifier_dataset, load_classifier_config
-from TC import TC
+from models import MaskedModel4Pretrain, fetch_classifier
+from utils import load_pretrain_data_config, get_device, handle_argv, IMUDataset, prepare_classifier_dataset,\
+    load_classifier_config
+from Contrastive import Contrastive
 from finetune_train import FinetuneTrainer
 
 '''
@@ -36,12 +36,12 @@ if __name__ == "__main__":
 
     data_set = IMUDataset(data, labels, pipeline=[])
     data_loader = DataLoader(data_set, shuffle=False, batch_size=train_cfg.batch_size)
-    LIMUBert_model = LIMUBertModel4Pretrain(model_cfg, output_embed=True)
-    TC_model = TC()
+    Masked_model = MaskedModel4Pretrain(model_cfg, output_embed=True)
+    Contrastive_model = Contrastive()
     criterion = nn.MSELoss(reduction='none')
 
     optimizer = None
-    trainer = train.Trainer(train_cfg, LIMUBert_model, optimizer, TC_model, optimizer, args.save_path_pretrain,
+    trainer = train.Trainer(train_cfg, Masked_model, optimizer, Contrastive_model, optimizer, args.save_path_pretrain,
                             get_device(args.gpu), train_cfg.batch_size, criterion)
     target_embedding = trainer.output_embedding(data_loader, args.save_path_pretrain)
 

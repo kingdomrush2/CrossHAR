@@ -4,46 +4,19 @@ import os
 
 
 class PretrainModelConfig(NamedTuple):
-    "Configuration for BERT model"
     hidden: int = 0  # Dimension of Hidden Layer in Transformer Encoder
     hidden_ff: int = 0  # Dimension of Intermediate Layers in Positionwise Feedforward Net
     feature_num: int = 0  # Factorized embedding parameterization
-
     n_layers: int = 0  # Numher of Hidden Layers
     n_heads: int = 0  # Numher of Heads in Multi-Headed Attention Layers
-    #activ_fn: str = "gelu" # Non-linear Activation Function Type in Hidden Layers
     seq_len: int = 0  # Maximum Length for Positional Embeddings
     emb_norm: bool = True
-
     @classmethod
     def from_json(cls, js):
         return cls(**js)
 
 
 class ClassifierModelConfig(NamedTuple):
-    "Configuration for classifier model"
-    seq_len: int = 0
-    input: int = 0
-
-    num_rnn: int = 0
-    num_layers: int = 0
-    rnn_io: list = []
-
-    num_cnn: int = 0
-    conv_io: list = []
-    pool: list = []
-    flat_num: int = 0
-
-    num_attn: int = 0
-    num_head: int = 0
-    atten_hidden: int = 0
-
-    num_linear: int = 0
-    linear_io: list = []
-
-    activ: bool = False
-    dropout: bool = False
-
     # transformer_v1
     input_size: int = 72
     hidden_size: int = 100
@@ -51,10 +24,6 @@ class ClassifierModelConfig(NamedTuple):
     num_heads: int = 4
     dropout_ratio: float = 0.1
     dim_feedforward: int = 2048
-
-    # CNN_v1
-    kernel_sizes: list = [5,3,3]
-
     @classmethod
     def from_json(cls, js):
         return cls(**js)
@@ -68,15 +37,11 @@ class TrainConfig(NamedTuple):
     lr: int = 0  # learning rate
     n_epochs: int = 0  # the number of epoch
     n_epochs_cl: int = 0
-    # `warm up` period = warmup(0.1)*total_steps
-    # linearly increasing learning rate from zero to the specified value(5e-5)
     warmup: float = 0
     save_steps: int = 0  # interval for saving model
     total_steps: int = 0  # total number of steps to train
     lambda1: float = 0
     lambda2: float = 0
-
-
     @classmethod
     def from_json(cls, file): # load config from json file
         return cls(**json.load(open(file, "r")))
@@ -89,7 +54,6 @@ class MaskConfig(NamedTuple):
     max_gram: int = 0  # number of max n-gram to masking
     mask_prob: float = 1.0
     replace_prob: float = 0.0
-
     @classmethod
     def from_json(cls, file): # load config from json file
         return cls(**json.load(open(file, "r")))
@@ -98,7 +62,6 @@ class MaskConfig(NamedTuple):
 class DatasetConfig(NamedTuple):
     """ Hyperparameters for training """
     sr: int = 0  # sampling rate
-    # dataset = Narray with shape (size, seq_len, dimension)
     size: int = 0  # data sample number
     seq_len: int = 0  # seq length
     dimension: int = 0  # feature dimension
@@ -146,7 +109,7 @@ def create_io_config(args, dataset_name, version, pretrain_model=None, target='p
 
 
 def load_model_config(target, prefix, version
-                      , path_bert='config/limu_bert.json', path_classifier='config/classifier.json'):
+                      , path_bert='config/pretrain_model.json', path_classifier='config/classifier.json'):
     if "bert" not in target: # pretrain or pure classifier
         if "pretrain" in target:
             model_config_all = json.load(open(path_bert, "r"))

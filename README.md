@@ -65,13 +65,13 @@ Example:
 ```shell
 python pretrain.py -d uci
 ```
-For this command, we will pretrain our model with the UCI dataset "data_20_120.npy" and "label_20_120.npy". The pretrained model will be saved as "model_LIMUBert_6_1.pt" and "model_TC_6_1.pt" in the saved/pretrain_base_uci_20_120 folder.
+For this command, we will pretrain our model with the UCI dataset "data_20_120.npy" and "label_20_120.npy". The pretrained model will be saved as "model_masked_6_1.pt" and "model_TC_6_1.pt" in the saved/pretrain_base_uci_20_120 folder.
 ### (2) Finetuning
 Example:
 ```shell
 python embedding.py -d uci
 ```
-For this command, we will load the pretrained model file "model_LIMUBert_6_1.pt" and "model_TC_6_1.pt" in the saved/pretrain_base_uci_20_120 folder. And embedding.py will save the learned representations as "embed_uci_20_120.npy" in the embed folder, and the label will be saved in the embed folder too.
+For this command, we will load the pretrained model file "model_masked_6_1.pt" and "model_TC_6_1.pt" in the saved/pretrain_base_uci_20_120 folder. And embedding.py will save the learned representations as "embed_uci_20_120.npy" in the embed folder, and the label will be saved in the embed folder too.
 ```shell
 python classifier.py -d uci -lr 0.1
 ```

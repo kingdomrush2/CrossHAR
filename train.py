@@ -9,12 +9,12 @@ from loss import NTXentLoss
 
 class Trainer(object):
     """Training Helper Class"""
-    def __init__(self, cfg, LIMUBert_model, LIMUBert_optimizer, TC_model, TC_optimizer, save_path, device, batch_size, criterion):
+    def __init__(self, cfg, masked_model, masked_optimizer, Contrastive_model, Contrastive_optimizer, save_path, device, batch_size, criterion):
         self.cfg = cfg # config for training : see class Config
-        self.LIMUBert_model = LIMUBert_model
-        self.LIMUBert_optimizer = LIMUBert_optimizer
-        self.TC_model = TC_model
-        self.TC_optimizer = TC_optimizer
+        self.masked_model = masked_model
+        self.masked_optimizer = masked_optimizer
+        self.Contrastive_model = Contrastive_model
+        self.Contrastive_optimizer = Contrastive_optimizer
         self.save_path = save_path
         self.device = device  # device name
         self.batch_size = batch_size
@@ -28,11 +28,11 @@ class Trainer(object):
         n_epoch_now = 0  # define epoch that model begin to train
 
         self.load(model_file)
-        self.LIMUBert_model = self.LIMUBert_model.to(self.device)
-        self.TC_model = self.TC_model.to(self.device)
+        self.masked_model = self.masked_model.to(self.device)
+        self.Contrastive_model = self.Contrastive_model.to(self.device)
 
-        self.LIMUBert_model.train()
-        self.TC_model.train()
+        self.masked_model.train()
+        self.Contrastive_model.train()
 
         global_step = 0 # global iteration steps regardless of epochs
         best_loss = 1e6
@@ -44,19 +44,19 @@ class Trainer(object):
                 start_time = time.time()
                 mask_seqs_1, masked_pos_1, seqs_1 = mask_seqs_1.to(self.device), masked_pos_1.to(self.device), seqs_1.to(self.device)
                 mask_seqs_2, masked_pos_2, seqs_2 = mask_seqs_2.to(self.device), masked_pos_2.to(self.device), seqs_2.to(self.device)
-                self.LIMUBert_optimizer.zero_grad()
-                self.TC_optimizer.zero_grad()
+                self.masked_optimizer.zero_grad()
+                self.Contrastive_optimizer.zero_grad()
 
-                representation_1, seq_recon_1 = self.LIMUBert_model(mask_seqs_1, masked_pos_1)
+                representation_1, seq_recon_1 = self.masked_model(mask_seqs_1, masked_pos_1)
                 loss_lm_1 = self.criterion(seq_recon_1, seqs_1)
                 loss_lm_1 = loss_lm_1.mean()  # mean() for Data Parallelism
                 
-                representation_2, seq_recon_2 = self.LIMUBert_model(mask_seqs_2, masked_pos_2)  # shape(128,120time_step,72feature_num)
+                representation_2, seq_recon_2 = self.masked_model(mask_seqs_2, masked_pos_2)  # shape(128,120time_step,72feature_num)
                 loss_lm_2 = self.criterion(seq_recon_2, seqs_2)
                 loss_lm_2 = loss_lm_2.mean()  # mean() for Data Parallelism
 
-                zis = self.TC_model(representation_1)
-                zjs = self.TC_model(representation_2)
+                zis = self.Contrastive_model(representation_1)
+                zjs = self.Contrastive_model(representation_2)
 
                 nt_xent_criterion = NTXentLoss(device=self.device, batch_size=self.batch_size)
                 loss_nt = nt_xent_criterion(zis, zjs)
@@ -79,8 +79,8 @@ class Trainer(object):
                 # loss = loss_nt  # only use contrastive loss
 
                 loss.backward()
-                self.LIMUBert_optimizer.step()
-                self.TC_optimizer.step()
+                self.masked_optimizer.step()
+                self.Contrastive_optimizer.step()
 
                 time_sum += time.time() - start_time
                 global_step += 1
@@ -105,8 +105,8 @@ class Trainer(object):
 
     def run(self, data_loader, e):
         """ Evaluation Loop """
-        self.LIMUBert_model.eval() # evaluation mode
-        self.TC_model.eval()
+        self.masked_model.eval() # evaluation mode
+        self.Contrastive_model.eval()
         results = [] # prediction results
         labels = []
         time_sum = 0.0
@@ -117,16 +117,16 @@ class Trainer(object):
             mask_seqs_2, masked_pos_2, seqs_2 = mask_seqs_2.to(self.device), masked_pos_2.to(self.device), seqs_2.to(
                 self.device)
             with torch.no_grad():  # evaluation without gradient calculation
-                representation_1, seq_recon_1 = self.LIMUBert_model(mask_seqs_1, masked_pos_1)
+                representation_1, seq_recon_1 = self.masked_model(mask_seqs_1, masked_pos_1)
                 loss_lm_1 = self.criterion(seq_recon_1, seqs_1)
                 loss_lm_1 = loss_lm_1.mean()  # mean() for Data Parallelism
                 
-                representation_2, seq_recon_2 = self.LIMUBert_model(mask_seqs_2, masked_pos_2)  # shape(128,120time_step,72feature_num)
+                representation_2, seq_recon_2 = self.masked_model(mask_seqs_2, masked_pos_2)  # shape(128,120time_step,72feature_num)
                 loss_lm_2 = self.criterion(seq_recon_2, seqs_2)
                 loss_lm_2 = loss_lm_2.mean()  # mean() for Data Parallelism
 
-                zis = self.TC_model(representation_1)
-                zjs = self.TC_model(representation_2)
+                zis = self.Contrastive_model(representation_1)
+                zjs = self.Contrastive_model(representation_2)
 
                 nt_xent_criterion = NTXentLoss(device=self.device, batch_size=self.batch_size)
                 loss_nt = nt_xent_criterion(zis, zjs)
@@ -156,29 +156,29 @@ class Trainer(object):
 
     def output_embedding(self, data_loader, model_file=None, data_parallel=False, load_self=False):
         """ Evaluation Loop """
-        self.LIMUBert_model.eval() # evaluation mode
-        self.TC_model.eval()
+        self.masked_model.eval() # evaluation mode
+        self.Contrastive_model.eval()
         self.load(model_file, load_self=load_self)
-        self.LIMUBert_model = self.LIMUBert_model.to(self.device)
-        self.TC_model = self.TC_model.to(self.device)
+        self.masked_model = self.masked_model.to(self.device)
+        self.Contrastive_model = self.Contrastive_model.to(self.device)
         results = []
         for seqs, label in data_loader:
             seqs, label = seqs.to(self.device), label.to(self.device)
             with torch.no_grad():  # evaluation without gradient calculation
-                representation = self.LIMUBert_model(seqs)
+                representation = self.masked_model(seqs)
                 results.append(representation)
         return torch.cat(results, 0).cpu().numpy()
 
     def test_inferece_time(self, data_loader, model_file=None, data_parallel=False, load_self=False, classifier_model=None):
         """ Calculate inferece time per sample """
-        self.LIMUBert_model.eval() # evaluation mode
-        self.TC_model.eval()
+        self.masked_model.eval() # evaluation mode
+        self.Contrastive_model.eval()
         classifier_model.eval()
         classifier_model_path = 'saved/classifier_base_transformer_uci_20_120_4activity/limu_v1_4activity_transformer.pt'
         classifier_model.load_state_dict(torch.load(classifier_model_path, map_location=self.device))
         self.load(model_file, load_self=load_self)
-        self.LIMUBert_model = self.LIMUBert_model.to(self.device)
-        self.TC_model = self.TC_model.to(self.device)
+        self.masked_model = self.masked_model.to(self.device)
+        self.Contrastive_model = self.Contrastive_model.to(self.device)
         results = []
         inferece_time_list = []
         num = 0
@@ -192,7 +192,7 @@ class Trainer(object):
             seqs, label = seqs.to(self.device), label.to(self.device)
             with torch.no_grad():  # evaluation without gradient calculation
                 start_time = time.time()
-                representation = self.LIMUBert_model(seqs)
+                representation = self.masked_model(seqs)
                 representation = classifier_model(representation)
                 predicted = torch.max(representation, 1)[1]
                 end_time = time.time()
@@ -207,17 +207,17 @@ class Trainer(object):
         """ load saved model or pretrained transformer (a part of model) """
         if model_file:
             if load_self:
-                self.LIMUBert_model.load_self(model_file + '.pt', map_location=self.device)
+                self.masked_model.load_self(model_file + '.pt', map_location=self.device)
             else:
-                LIMUBert_model_path = model_file + '_LIMUBert_'+str(self.lambda1)+'_'+str(self.lambda2)+self.beizhu+'.pt'
-                TC_model_path = model_file + '_TC_'+str(self.lambda1)+'_'+str(self.lambda2)+self.beizhu+'.pt'
-                print('Loading the pretrain LIMUBert model from', LIMUBert_model_path)
-                print('Loading the pretrain TC model from', TC_model_path)
-                self.LIMUBert_model.load_state_dict(torch.load(LIMUBert_model_path, map_location=self.device))
-                self.TC_model.load_state_dict(torch.load(TC_model_path, map_location=self.device))
+                masked_model_path = model_file + '_masked_'+str(self.lambda1)+'_'+str(self.lambda2)+self.beizhu+'.pt'
+                Contrastive_model_path = model_file + '_Contrastive_'+str(self.lambda1)+'_'+str(self.lambda2)+self.beizhu+'.pt'
+                print('Loading the pretrain masked model from', masked_model_path)
+                print('Loading the pretrain Contrastive model from', Contrastive_model_path)
+                self.masked_model.load_state_dict(torch.load(masked_model_path, map_location=self.device))
+                self.Contrastive_model.load_state_dict(torch.load(Contrastive_model_path, map_location=self.device))
 
     def save(self):
         """ save current model """
-        torch.save(self.LIMUBert_model.state_dict(),  self.save_path + '_LIMUBert_'+str(self.lambda1)+'_'+str(self.lambda2)+self.beizhu+'.pt')
-        torch.save(self.TC_model.state_dict(), self.save_path + '_TC_'+str(self.lambda1)+'_'+str(self.lambda2)+self.beizhu+'.pt')
+        torch.save(self.masked_model.state_dict(),  self.save_path + '_masked_'+str(self.lambda1)+'_'+str(self.lambda2)+self.beizhu+'.pt')
+        torch.save(self.Contrastive_model.state_dict(), self.save_path + '_Contrastive_'+str(self.lambda1)+'_'+str(self.lambda2)+self.beizhu+'.pt')
 

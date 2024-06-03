@@ -242,7 +242,7 @@ class Pipeline():
 
 
 class Preprocess4Normalization(Pipeline):
-    """ Pre-processing steps for pretraining transformer """
+    """ Pre-processing steps for pretraining"""
     def __init__(self, feature_len, norm_acc=True, norm_mag=True, gamma=1.0):
         super().__init__()
         self.feature_len = feature_len
@@ -254,7 +254,7 @@ class Preprocess4Normalization(Pipeline):
         self.instance_norm = nn.InstanceNorm1d(self.feature_len)
 
     def __call__(self, instance):
-        # IMUbert normalization
+        # masked normalization
         instance_new = instance.copy()[:, :self.feature_len]
         if instance_new.shape[1] >= 6 and self.norm_acc:
             instance_new[:, :3] = instance_new[:, :3] / self.acc_norm
@@ -266,7 +266,7 @@ class Preprocess4Normalization(Pipeline):
 
 
 class Preprocess4Mask:
-    """ Pre-processing steps for pretraining transformer """
+    """ Pre-processing steps for pretraining"""
     def __init__(self, mask_cfg):
         self.mask_ratio = mask_cfg.mask_ratio  # masking probability
         self.mask_alpha = mask_cfg.mask_alpha
@@ -341,31 +341,6 @@ class IMUDataset(Dataset):
 
     def __len__(self):
         return len(self.data)
-
-
-class FFTDataset(Dataset):
-    def __init__(self, data, labels, mode=0, pipeline=[]):
-        super().__init__()
-        self.pipeline = pipeline
-        self.data = data
-        self.labels = labels
-        self.mode = mode
-
-    def __getitem__(self, index):
-        instance = self.data[index]
-        for proc in self.pipeline:
-            instance = proc(instance)
-        seq = self.preprocess(instance)
-        return torch.from_numpy(seq), torch.from_numpy(np.array(self.labels[index])).long()
-
-    def __len__(self):
-        return len(self.data)
-
-    def preprocess(self, instance):
-        f = np.fft.fft(instance, axis=0, n=10)
-        mag = np.abs(f)
-        phase = np.angle(f)
-        return np.concatenate([mag, phase], axis=0).astype(np.float32)
 
 
 class LIBERTDataset4Pretrain(Dataset): 

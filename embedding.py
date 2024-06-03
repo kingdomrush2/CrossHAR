@@ -4,9 +4,9 @@ import numpy as np
 
 from torch import nn
 from torch.utils.data import DataLoader
-from models import LIMUBertModel4Pretrain
+from models import MaskedModel4Pretrain
 from utils import load_pretrain_data_config, get_device, handle_argv, IMUDataset, augument_dataset
-from TC import TC
+from Contrastive import Contrastive
 
 
 def fetch_setup(args, output_embed):
@@ -18,19 +18,19 @@ def fetch_setup(args, output_embed):
     data_set = IMUDataset(data, labels, pipeline=pipeline)
     data_loader = DataLoader(data_set, shuffle=False, batch_size=1)
 
-    LIMUBert_model = LIMUBertModel4Pretrain(model_cfg, output_embed=output_embed)
-    TC_model = TC()
+    Masked_model = MaskedModel4Pretrain(model_cfg, output_embed=output_embed)
+    Contrastive_model = Contrastive()
     criterion = nn.MSELoss(reduction='none')
-    return data, labels, data_loader, LIMUBert_model, TC_model, criterion, train_cfg
+    return data, labels, data_loader, Masked_model, Contrastive_model, criterion, train_cfg
 
 
 def generate_embedding_or_output(args, save=False, output_embed=True):
-    data, labels, data_loader, LIMUBert_model, TC_model, criterion, train_cfg \
+    data, labels, data_loader, Masked_model, Contrastive_model, criterion, train_cfg \
         = fetch_setup(args, output_embed)
 
     optimizer = None
     criterion = nn.MSELoss(reduction='none')
-    trainer = train.Trainer(train_cfg, LIMUBert_model, optimizer, TC_model, optimizer, args.save_path_pretrain,
+    trainer = train.Trainer(train_cfg, Masked_model, optimizer, Contrastive_model, optimizer, args.save_path_pretrain,
                             get_device(args.gpu), train_cfg.batch_size, criterion)
 
     output = trainer.output_embedding(data_loader, args.save_path_pretrain)

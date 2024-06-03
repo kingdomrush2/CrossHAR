@@ -6,7 +6,7 @@ import models, train
 from torch.utils.data import Dataset, TensorDataset, DataLoader
 from torchinfo import summary
 from models import MaskedModel4Pretrain
-from utils import get_device, LIBERTDataset4Pretrain, handle_argv, load_pretrain_data_config, \
+from utils import get_device, Dataset4Pretrain, handle_argv, load_pretrain_data_config, \
     prepare_pretrain_dataset, Preprocess4Normalization,  Preprocess4Mask, augument_dataset
 from Contrastive import Contrastive
 
@@ -21,8 +21,8 @@ def main(args, training_rate):
     print('data_train size:', len(data_train))
     print('data_val size:', len(data_test))
 
-    data_set_train = LIBERTDataset4Pretrain(data_train, pipeline=pipeline)
-    data_set_test = LIBERTDataset4Pretrain(data_test, pipeline=pipeline)
+    data_set_train = Dataset4Pretrain(data_train, pipeline=pipeline)
+    data_set_test = Dataset4Pretrain(data_test, pipeline=pipeline)
     print('pretrain batch_size:', train_cfg.batch_size)
     print('pretrain epoch:', train_cfg.n_epochs)
     print('learning rate:', train_cfg.lr)
